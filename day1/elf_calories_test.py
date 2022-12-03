@@ -3,11 +3,15 @@ import unittest
 import elf_calories
 
 
-class TestElfCalorieCalculator(unittest.TestCase):
-    def test_calorie_calculator(self):
-        test_input_filename = "test_input.txt"
+class TestElfRations(unittest.TestCase):
+    def setUp(self):
+        self.elf_rations = elf_calories.ElfRations("test_input.txt")
 
-        self.assertEqual(24000, elf_calories.find_max_calories(test_input_filename))
+    def test_max_calories(self):
+        self.assertEqual(24000, self.elf_rations.max_calories())
+
+    def test_top_n_elves_total_calories(self):
+        self.assertEqual(45000, self.elf_rations.top_n_elves_total_calories())
 
 
 if __name__ == "__main__":
