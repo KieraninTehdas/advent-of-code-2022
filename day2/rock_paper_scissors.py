@@ -1,7 +1,7 @@
 import sys
 
 # A -> Rock, B -> Paper, C -> Scissors
-# X -> Rock, Y -> Paper, Z -> Scissors
+# X -> Lose, Y -> Draw, Z -> Z
 
 # Rock = 1, Paper = 2, Scissors = 3
 
@@ -9,25 +9,32 @@ import sys
 
 
 class Game:
-    scores = {"A": 1, "B": 2, "C": 3}
-    play_mappings = {"X": "A", "Y": "B", "Z": "C"}
+    play_scores = {"A": 1, "B": 2, "C": 3}
     plays = ["A", "B", "C"]
+    outcome_scores = {"X": 0, "Y": 3, "Z": 6}
 
     def __init__(self, rounds_input_filename):
         self.rounds_input_filename = rounds_input_filename
 
-    def _calculate_round_score(self, opponent_play, your_play):
-        play_score = self.scores[your_play]
+    def _calculate_your_play(self, opponent_play, round_outcome):
+        winning_play = self.plays[
+            (self.plays.index(opponent_play) + 1) % len(self.plays)
+        ]
+        losing_play = self.plays[
+            (self.plays.index(opponent_play) - 1) % len(self.plays)
+        ]
 
-        winning_play = self.plays[(self.plays.index(your_play) + 1) % len(self.plays)]
-        losing_play = self.plays[(self.plays.index(your_play) - 1) % len(self.plays)]
-
-        if opponent_play == winning_play:
-            return play_score
-        elif opponent_play == losing_play:
-            return 6 + play_score
+        if round_outcome == "X":
+            return losing_play
+        elif round_outcome == "Y":
+            return opponent_play
         else:
-            return 3 + play_score
+            return winning_play
+
+    def _calculate_round_score(self, opponent_play, round_outcome):
+        your_play = self._calculate_your_play(opponent_play, round_outcome)
+
+        return self.play_scores[your_play] + self.outcome_scores[round_outcome]
 
     def total_score(self):
         score = 0
@@ -35,9 +42,7 @@ class Game:
         with open(self.rounds_input_filename, "r") as f:
             for round_ in f:
                 plays = round_.strip().split(" ")
-                score += self._calculate_round_score(
-                    plays[0], self.play_mappings[plays[1]]
-                )
+                score += self._calculate_round_score(plays[0], plays[1])
 
         return score
 
