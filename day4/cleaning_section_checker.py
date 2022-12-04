@@ -2,6 +2,15 @@ import sys
 
 
 def _ranges_overlap(range1, range2):
+    return (
+        (range2[0] <= range1[0] <= range2[1])
+        or (range2[0] <= range1[1] <= range2[1])
+        or (range1[0] <= range2[0] <= range1[1])
+        or (range1[0] <= range2[1] <= range1[1])
+    )
+
+
+def _ranges_overlap_completely(range1, range2):
     return (range1[0] <= range2[0] and range1[1] >= range2[1]) or (
         range2[0] <= range1[0] and range2[1] >= range1[1]
     )
