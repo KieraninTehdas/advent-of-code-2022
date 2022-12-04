@@ -36,5 +36,32 @@ def common_item_priority_total(input_filename):
     return total
 
 
+def _find_group_badge(group_rucksacks):
+    return (
+        group_rucksacks[0]
+        .intersection(group_rucksacks[1])
+        .intersection(group_rucksacks[2])
+    )
+
+
+def group_badge_priority_total(input_filename):
+    total = 0
+    n_rucksacks_in_group = 3
+
+    with open(input_filename, "r") as f:
+        group_rucksack_idx = 0
+        group_rucksacks = []
+        for rucksack_contents in f:
+            group_rucksacks.append(set(rucksack_contents.strip()))
+
+            if len(group_rucksacks) % n_rucksacks_in_group == 0:
+                badge = list(_find_group_badge(group_rucksacks))
+
+                total += _calculate_priority(badge[0])
+                group_rucksacks = []
+
+    return total
+
+
 if __name__ == "__main__":
-    print(common_item_priority_total(sys.argv[1]))
+    print(group_badge_priority_total(sys.argv[1]))
