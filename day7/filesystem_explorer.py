@@ -21,11 +21,14 @@ class Directory:
     def add_child(self, file):
         self.children.append(file)
 
+    def list(self):
+        return self.children
+
     def __str__(self):
-        return f"{self.name}"
+        return str({self.name: [str(child) for child in self.children]})
 
     def __repr__(self):
-        return f"{self.name}"
+        return str(self)
 
 
 class File:
@@ -42,7 +45,7 @@ class File:
         return f"{self.name} ({self.size})"
 
     def __repr__(self):
-        return f"{self.name} ({self.size})"
+        return str(self)
 
 
 def _construct_filesystem(terminal_output):
@@ -50,4 +53,10 @@ def _construct_filesystem(terminal_output):
 
 
 if __name__ == "__main__":
-    pass
+    root = Directory("c")
+    file1 = File("file1", 256, root)
+    file2 = File("file2", 20, root)
+    dir1 = Directory("d", root)
+    file3 = File("file3", 500, dir1)
+
+    pprint(root.calculate_size())
