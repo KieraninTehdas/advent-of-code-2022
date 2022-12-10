@@ -9,17 +9,13 @@ class FileType(Enum):
 
 
 class Directory:
-    def __init__(self, name, directory=None, children=None):
+    def __init__(self, name, directory=None):
         self.name = name
         self.directory = directory
+        self.children = []
 
         if directory:
             self.directory.add_file(self)
-
-        if children is None:
-            self.children = []
-        else:
-            self.children = children
 
     def file_type(self):
         return FileType.DIRECTORY
@@ -79,6 +75,8 @@ class Filesystem:
         self.current_directory: Directory = self.root_directory
 
     def execute_command(self, command_string):
+        print(f"Executing command `{command_string}`")
+
         commands = {"ls": self._list, "cd": self._change_directory}
         split_command = command_string.split(" ")
 
@@ -96,7 +94,11 @@ class Filesystem:
 
     def _change_directory(self, target):
         if target == "..":
+            if self.current_directory.directory is None:
+                return
             self.current_directory = self.current_directory.directory
+        elif target == self.current_directory.name:
+            return
         else:
             target_directory = next(
                 filter(
@@ -114,9 +116,49 @@ class Filesystem:
 
 if __name__ == "__main__":
     fs = Filesystem("/")
-    file1 = File("file1", 256, fs.current_directory)
-    file2 = File("file2", 20, fs.current_directory)
-    dir1 = Directory("d", fs.current_directory)
-    file3 = File("file3", 500, dir1)
 
+    with open(sys.argv[1], "r") as f:
+        for line in f:
+            print(fs.current_directory)
+            tokens = line.strip().split(" ")
+            if tokens[0] == "$":
+                if tokens[1] == "cd":
+                    fs.execute_command(" ".join(tokens[1:]))
+                else:
+                    continue
+            elif tokens[0] == "dir":
+                dir_name = tokens[1]
+                existing_dir = next(
+                    filter(
+                        lambda f: f.file_type() == FileType.DIRECTORY
+                        and f.name == dir_name,
+                        fs.current_directory.children,
+                    ),
+                    None,
+                )
+
+                if not existing_dir:
+                    print(f"Adding dir {dir_name} to {fs.current_directory.name}")
+                    Directory(dir_name, fs.current_directory)
+            else:
+                file_name = tokens[1]
+
+                existing_file = next(
+                    filter(
+                        lambda f: f.file_type() == FileType.FILE
+                        and f.name == file_name,
+                        fs.current_directory.children,
+                    ),
+                    None,
+                )
+
+                if not existing_file:
+                    print(f"Adding file {file_name} to {fs.current_directory.name}")
+                    File(file_name, int(tokens[0]), fs.current_directory)
+
+    fs.execute_command("cd ..")
+    fs.execute_command("cd ..")
+    fs.execute_command("cd ..")
+    fs.execute_command("cd ..")
+    pprint(fs.current_directory.name)
     pprint(fs.execute_command("ls"))
