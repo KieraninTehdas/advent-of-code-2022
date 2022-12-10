@@ -19,6 +19,20 @@ class TestCommunicationProtocol(unittest.TestCase):
             communication_protocol.find_first_packet_marker_index(buffer), expected
         )
 
+    @parameterized.expand(
+        [
+            ["mjqjpqmgbljsphdztnvjfqwrcgsmlb", 19],
+            ["bvwbjplbgvbhsrlpgdmjqwftvncz", 23],
+            ["nppdvjthqldpwncqszvftbrmjlhg", 23],
+            ["nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 29],
+            ["zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 26],
+        ]
+    )
+    def test_find_first_message_marker_index(self, buffer, expected):
+        self.assertEqual(
+            communication_protocol.find_first_packet_marker_index(buffer, 14), expected
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
