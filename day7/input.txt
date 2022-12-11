@@ -1,4 +1,3 @@
-$ cd /
 $ ls
 dir gqlg
 dir hchrwstr

@@ -86,8 +86,6 @@ class Filesystem:
             if self.current_directory.directory is None:
                 return
             self.current_directory = self.current_directory.directory
-        elif target == self.current_directory.name:
-            return
         else:
             target_directory = next(
                 filter(

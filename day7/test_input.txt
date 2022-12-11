@@ -1,4 +1,3 @@
-$ cd /
 $ ls
 dir a
 14848514 b.txt
