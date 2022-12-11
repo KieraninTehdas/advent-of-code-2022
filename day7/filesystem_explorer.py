@@ -13,7 +13,7 @@ class Directory:
     def __init__(self, name, directory=None):
         self.name = name
         self.directory = directory
-        self.children = []
+        self.files = []
 
         if directory:
             self.directory.add_file(self)
@@ -22,16 +22,22 @@ class Directory:
         return FileType.DIRECTORY
 
     def calculate_size(self):
-        return sum([child.calculate_size() for child in self.children])
+        return sum([child.calculate_size() for child in self.files])
 
     def add_file(self, file):
-        self.children.append(file)
+        self.files.append(file)
 
     def list(self):
-        return self.children
+        return self.files
+
+    def list_dirs(self):
+        return filter(
+            lambda f: f.file_type() == FileType.DIRECTORY,
+            self.files,
+        )
 
     def __str__(self):
-        return str({self.name: [str(child) for child in self.children]})
+        return str({self.name: [str(child) for child in self.files]})
 
     def __repr__(self):
         return str(self)
@@ -71,32 +77,9 @@ class Filesystem:
         self.root_directory = Directory(root_directory_name)
         self.current_directory: Directory = self.root_directory
 
-    # Unused for now
-    def execute_command(self, command_string):
-        commands = {"ls": self.list, "cd": self.change_directory}
-        split_command = command_string.split(" ")
-
-        command = split_command[0]
-
-        if len(split_command) == 1:
-            argument = ""
-        else:
-            argument = split_command[1]
-
-        return commands[command](argument)
-
     def go_to_root_directory(self):
         while self.current_directory.directory:
             self.change_directory("..")
-
-    def list(self, file_type_filter: Optional[FileType] = None):
-        if file_type_filter:
-            return filter(
-                lambda f: f.file_type() == file_type_filter,
-                self.current_directory.children,
-            )
-        else:
-            return self.current_directory.children
 
     def change_directory(self, target):
         if target == "..":
@@ -109,7 +92,7 @@ class Filesystem:
             target_directory = next(
                 filter(
                     lambda f: f.file_type() == FileType.DIRECTORY and f.name == target,
-                    self.current_directory.children,
+                    self.current_directory.files,
                 ),
                 None,
             )
@@ -137,7 +120,7 @@ def parse_filesystem(filename):
                     filter(
                         lambda f: f.file_type() == FileType.DIRECTORY
                         and f.name == dir_name,
-                        fs.current_directory.children,
+                        fs.current_directory.files,
                     ),
                     None,
                 )
@@ -151,7 +134,7 @@ def parse_filesystem(filename):
                     filter(
                         lambda f: f.file_type() == FileType.FILE
                         and f.name == file_name,
-                        fs.current_directory.children,
+                        fs.current_directory.files,
                     ),
                     None,
                 )
@@ -163,8 +146,30 @@ def parse_filesystem(filename):
     return fs
 
 
+def calculate_total_branch_size(_dir, previous_total=0, size_limit=100000):
+    dir_size = _dir.calculate_size()
+
+    next_total = previous_total
+    if dir_size < size_limit:
+        next_total += dir_size
+
+    for sub_dir in _dir.list_dirs():
+        next_total = calculate_total_branch_size(sub_dir, next_total)
+
+    return next_total
+
+
 if __name__ == "__main__":
+    size_limit = 100000
 
     fs = parse_filesystem(sys.argv[1])
-    print(fs.current_directory.name)
-    pprint(fs.execute_command("ls"))
+
+    total_size = 0
+
+    if fs.current_directory.calculate_size() < size_limit:
+        total_size += fs.current_directory.calculate_size()
+
+    for _dir in fs.current_directory.list_dirs():
+        total_size += calculate_total_branch_size(_dir)
+
+    print(total_size)
