@@ -1,6 +1,7 @@
 import sys
 from pprint import pprint
 from enum import Enum
+from typing import Optional
 
 
 class FileType(Enum):
@@ -56,10 +57,6 @@ class File:
         return str(self)
 
 
-def _construct_filesystem(terminal_output):
-    pass
-
-
 class DirectoryUnknownError(Exception):
     def __init__(self, current_directory, target_directory):
         self.target_directory = target_directory
@@ -74,10 +71,9 @@ class Filesystem:
         self.root_directory = Directory(root_directory_name)
         self.current_directory: Directory = self.root_directory
 
+    # Unused for now
     def execute_command(self, command_string):
-        print(f"Executing command `{command_string}`")
-
-        commands = {"ls": self._list, "cd": self._change_directory}
+        commands = {"ls": self.list, "cd": self.change_directory}
         split_command = command_string.split(" ")
 
         command = split_command[0]
@@ -89,10 +85,20 @@ class Filesystem:
 
         return commands[command](argument)
 
-    def _list(self, _):
-        return self.current_directory.list()
+    def go_to_root_directory(self):
+        while self.current_directory.directory:
+            self.change_directory("..")
 
-    def _change_directory(self, target):
+    def list(self, file_type_filter: Optional[FileType] = None):
+        if file_type_filter:
+            return filter(
+                lambda f: f.file_type() == file_type_filter,
+                self.current_directory.children,
+            )
+        else:
+            return self.current_directory.children
+
+    def change_directory(self, target):
         if target == "..":
             if self.current_directory.directory is None:
                 return
@@ -114,16 +120,15 @@ class Filesystem:
             self.current_directory = target_directory
 
 
-if __name__ == "__main__":
+def parse_filesystem(filename):
     fs = Filesystem("/")
 
-    with open(sys.argv[1], "r") as f:
+    with open(filename, "r") as f:
         for line in f:
-            print(fs.current_directory)
             tokens = line.strip().split(" ")
             if tokens[0] == "$":
                 if tokens[1] == "cd":
-                    fs.execute_command(" ".join(tokens[1:]))
+                    fs.change_directory(tokens[2])
                 else:
                     continue
             elif tokens[0] == "dir":
@@ -138,7 +143,6 @@ if __name__ == "__main__":
                 )
 
                 if not existing_dir:
-                    print(f"Adding dir {dir_name} to {fs.current_directory.name}")
                     Directory(dir_name, fs.current_directory)
             else:
                 file_name = tokens[1]
@@ -153,12 +157,14 @@ if __name__ == "__main__":
                 )
 
                 if not existing_file:
-                    print(f"Adding file {file_name} to {fs.current_directory.name}")
                     File(file_name, int(tokens[0]), fs.current_directory)
 
-    fs.execute_command("cd ..")
-    fs.execute_command("cd ..")
-    fs.execute_command("cd ..")
-    fs.execute_command("cd ..")
-    pprint(fs.current_directory.name)
+    fs.go_to_root_directory()
+    return fs
+
+
+if __name__ == "__main__":
+
+    fs = parse_filesystem(sys.argv[1])
+    print(fs.current_directory.name)
     pprint(fs.execute_command("ls"))
