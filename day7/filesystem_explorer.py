@@ -157,7 +157,7 @@ def calculate_total_branch_size(_dir, previous_total=0, size_limit=100000):
     return next_total
 
 
-if __name__ == "__main__":
+def part_one():
     size_limit = 100000
 
     fs = parse_filesystem(sys.argv[1])
@@ -171,3 +171,46 @@ if __name__ == "__main__":
         total_size += calculate_total_branch_size(_dir)
 
     print(total_size)
+
+
+def calculate_min_branch_size(_dir, min_size, previous_min=None):
+    dir_size = _dir.calculate_size()
+
+    if dir_size > min_size:
+        if previous_min is None:
+            previous_min = dir_size
+        elif dir_size < previous_min:
+            previous_min = dir_size
+
+    for sub_dir in _dir.list_dirs():
+        previous_min = calculate_min_branch_size(sub_dir, min_size, previous_min)
+
+    return previous_min
+
+
+def part_two():
+    total_space = 70000000
+    target_free_space = 30000000
+
+    fs = parse_filesystem(sys.argv[1])
+
+    current_free_space = total_space - fs.root_directory.calculate_size()
+
+    min_target_dir_size = target_free_space - current_free_space
+
+    min_dir_size = None
+
+    root_size = fs.current_directory.calculate_size()
+    if root_size > min_target_dir_size:
+        min_dir_size = root_size
+
+    for _dir in fs.current_directory.list_dirs():
+        min_dir_size = calculate_min_branch_size(
+            _dir, min_target_dir_size, min_dir_size
+        )
+
+    print(min_dir_size)
+
+
+if __name__ == "__main__":
+    part_two()
